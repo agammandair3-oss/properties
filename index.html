@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="PropList"/>
+<meta name="theme-color" content="#0f0f0f"/>
+<link rel="manifest" href="manifest.json"/>
+<title>Property Wishlist</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0ede8;
+    --muted: #888;
+    --accent: #c8a97e;
+    --accent2: #e8d5b7;
+    --green: #4caf7d;
+    --blue: #5b9cf6;
+    --amber: #f0a500;
+    --red: #e05c5c;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
+
+  /* TOP BAR */
+  .topbar {
+    padding: calc(var(--safe-top) + 12px) 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-left h1 { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); font-weight: 400; }
+  .topbar-left p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .add-fab { background: var(--accent); color: #0f0f0f; border: none; border-radius: 50px; width: 40px; height: 40px; font-size: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 300; flex-shrink: 0; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: flex; gap: 10px; padding: 14px 20px;
+    overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .stats-row::-webkit-scrollbar { display: none; }
+  .stat-pill {
+    background: var(--surface); border-radius: 50px; padding: 8px 16px;
+    display: flex; flex-direction: column; align-items: center; white-space: nowrap; flex-shrink: 0;
+    border: 0.5px solid var(--border);
+  }
+  .stat-num { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--accent); }
+  .stat-lbl { font-size: 10px; color: var(--muted); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* FILTERS */
+  .filters {
+    display: flex; gap: 8px; padding: 12px 20px;
+    overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .chip {
+    border: 0.5px solid var(--border); background: transparent; border-radius: 50px;
+    padding: 6px 14px; font-size: 13px; color: var(--muted); cursor: pointer;
+    white-space: nowrap; flex-shrink: 0; font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .chip.active { background: var(--accent); color: #0f0f0f; border-color: var(--accent); font-weight: 500; }
+
+  /* CARDS SCROLL */
+  .cards-wrap { flex: 1; overflow-y: auto; padding: 12px 20px calc(var(--safe-bot) + 20px); }
+  .cards-wrap::-webkit-scrollbar { display: none; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty h3 { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); font-weight: 400; margin-bottom: 8px; }
+  .empty p { font-size: 14px; line-height: 1.6; }
+
+  .card {
+    background: var(--surface); border-radius: 16px; border: 0.5px solid var(--border);
+    padding: 16px; margin-bottom: 12px;
+    animation: fadeUp 0.2s ease;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .card-name { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); font-weight: 400; line-height: 1.3; flex: 1; }
+  .card-price { font-size: 15px; font-weight: 500; color: var(--accent); white-space: nowrap; }
+  .card-loc { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .tag { font-size: 11px; padding: 3px 10px; border-radius: 50px; border: 0.5px solid var(--border); color: var(--muted); }
+  .tag-source { border-color: rgba(200,169,126,0.3); color: var(--accent); background: rgba(200,169,126,0.08); }
+  .tag-shortlisted { color: var(--blue); border-color: rgba(91,156,246,0.3); background: rgba(91,156,246,0.08); }
+  .tag-visited { color: var(--green); border-color: rgba(76,175,125,0.3); background: rgba(76,175,125,0.08); }
+  .tag-negotiating { color: var(--amber); border-color: rgba(240,165,0,0.3); background: rgba(240,165,0,0.08); }
+  .card-notes { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; font-style: italic; border-left: 2px solid var(--border); padding-left: 10px; }
+  .card-actions { display: flex; gap: 8px; }
+  .card-btn { flex: 1; background: var(--surface2); border: 0.5px solid var(--border); border-radius: 10px; padding: 8px 0; font-size: 12px; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .card-btn:active { transform: scale(0.97); }
+  .card-btn.link { color: var(--blue); border-color: rgba(91,156,246,0.2); background: rgba(91,156,246,0.05); }
+  .card-btn.del { color: var(--red); border-color: rgba(224,92,92,0.2); background: rgba(224,92,92,0.05); }
+
+  /* BOTTOM SHEET MODAL */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .overlay.open { opacity: 1; pointer-events: all; }
+  .sheet {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 51;
+    background: var(--surface); border-radius: 20px 20px 0 0;
+    border-top: 0.5px solid var(--border);
+    padding: 0 20px calc(var(--safe-bot) + 24px);
+    transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    max-height: 92vh; overflow-y: auto;
+  }
+  .sheet.open { transform: translateY(0); }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 20px; }
+  .sheet-title { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: var(--text); margin-bottom: 20px; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 7px; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: var(--surface2); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; font-size: 15px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; outline: none;
+    -webkit-appearance: none; appearance: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { min-height: 80px; resize: none; }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  .url-row { display: flex; gap: 8px; }
+  .url-row input { flex: 1; }
+  .paste-btn { background: var(--surface2); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--accent); cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+  .save-btn {
+    width: 100%; background: var(--accent); color: #0f0f0f; border: none; border-radius: 14px;
+    padding: 15px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 8px;
+    font-family: 'DM Sans', sans-serif; transition: opacity 0.15s;
+  }
+  .save-btn:active { opacity: 0.85; }
+  .auto-fill-hint { font-size: 12px; color: var(--accent); margin-top: 6px; display: none; }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    margin: 0 20px 12px; background: rgba(200,169,126,0.1); border: 0.5px solid rgba(200,169,126,0.3);
+    border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+  }
+  .install-banner p { font-size: 13px; color: var(--accent2); line-height: 1.4; flex: 1; }
+  .install-banner button { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>PropList</h1>
+    <p id="subtitle">Your property wishlist</p>
+  </div>
+  <button class="add-fab" onclick="openSheet()" aria-label="Add property">+</button>
+</div>
+
+<div id="installBanner" class="install-banner" style="display:none; margin-top:12px;">
+  <p>Add to Home Screen to use like an app — tap <strong>Share → Add to Home Screen</strong> in Safari</p>
+  <button onclick="document.getElementById('installBanner').style.display='none'">×</button>
+</div>
+
+<div class="stats-row" id="statsRow"></div>
+
+<div class="filters" id="filters">
+  <button class="chip active" data-f="all" onclick="setFilter('all',this)">All</button>
+  <button class="chip" data-f="99acres" onclick="setFilter('99acres',this)">99acres</button>
+  <button class="chip" data-f="OLX" onclick="setFilter('OLX',this)">OLX</button>
+  <button class="chip" data-f="MagicBricks" onclick="setFilter('MagicBricks',this)">MagicBricks</button>
+  <button class="chip" data-f="Housing.com" onclick="setFilter('Housing.com',this)">Housing.com</button>
+  <button class="chip" data-f="Other" onclick="setFilter('Other',this)">Other</button>
+</div>
+
+<div class="cards-wrap" id="cards"></div>
+
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <p class="sheet-title" id="sheetTitle">Add property</p>
+
+  <div class="field">
+    <label>Listing URL</label>
+    <div class="url-row">
+      <input id="f-url" placeholder="Paste link from 99acres / OLX…" oninput="onUrlInput(this.value)"/>
+      <button class="paste-btn" onclick="pasteUrl()">Paste</button>
+    </div>
+    <p class="auto-fill-hint" id="urlHint">✓ Source detected — fill details below</p>
+  </div>
+
+  <div class="field"><label>Property name</label><input id="f-name" placeholder="e.g. 3BHK Flat, Sector 7"/></div>
+  <div class="field"><label>Location</label><input id="f-loc" placeholder="City, locality"/></div>
+  <div class="field"><label>Price (₹)</label><input id="f-price" placeholder="e.g. 45,00,000" inputmode="numeric"/></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="field">
+      <label>Source</label>
+      <select id="f-source">
+        <option>99acres</option><option>OLX</option><option>MagicBricks</option><option>Housing.com</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Type</label>
+      <select id="f-type">
+        <option>Flat / Apartment</option><option>Independent House</option><option>Plot</option><option>Villa</option><option>Commercial</option><option>PG / Room</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Status</label>
+    <select id="f-status">
+      <option>Shortlisted</option><option>Visited</option><option>Negotiating</option>
+    </select>
+  </div>
+
+  <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Contact number, pros/cons, anything to remember…"></textarea></div>
+  <button class="save-btn" onclick="saveProp()">Save to Wishlist</button>
+</div>
+
+<script>
+const KEY = 'proplist_v2';
+let props = [], filter = 'all', editId = null;
+
+function load() {
+  try { props = JSON.parse(localStorage.getItem(KEY)) || sample(); } catch(e) { props = sample(); }
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(props)); } catch(e){} }
+function uid() { return Math.random().toString(36).slice(2,9); }
+function sample() {
+  return [
+    { id:uid(), name:'3BHK Flat, Sector 12', location:'Yamuna Nagar, Haryana', price:'38,00,000', source:'99acres', type:'Flat / Apartment', status:'Shortlisted', url:'', notes:'East facing, 6th floor, parking included', date:Date.now()-172800000 },
+    { id:uid(), name:'Independent House, Model Town', location:'Ambala, Haryana', price:'62,00,000', source:'OLX', type:'Independent House', status:'Visited', url:'', notes:'4BHK, needs renovation', date:Date.now()-86400000 },
+    { id:uid(), name:'Plot 200 sq yd, NH44 Road', location:'Yamuna Nagar', price:'28,50,000', source:'MagicBricks', type:'Plot', status:'Negotiating', url:'', notes:'Corner plot, good location', date:Date.now() },
+  ];
+}
+
+function detectSource(url) {
+  if(!url) return null;
+  if(url.includes('99acres')) return '99acres';
+  if(url.includes('olx.in')) return 'OLX';
+  if(url.includes('magicbricks')) return 'MagicBricks';
+  if(url.includes('housing.com')) return 'Housing.com';
+  return 'Other';
+}
+
+function onUrlInput(val) {
+  const src = detectSource(val);
+  const hint = document.getElementById('urlHint');
+  if(src) {
+    document.getElementById('f-source').value = src;
+    hint.textContent = `✓ ${src} detected`;
+    hint.style.display = 'block';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+async function pasteUrl() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const inp = document.getElementById('f-url');
+    inp.value = text;
+    onUrlInput(text);
+  } catch(e) {
+    document.getElementById('f-url').focus();
+  }
+}
+
+function render() {
+  let list = filter === 'all' ? [...props] : props.filter(p => p.source === filter);
+  list.sort((a,b) => b.date - a.date);
+
+  const c = document.getElementById('cards');
+  if(!list.length) {
+    c.innerHTML = `<div class="empty"><div class="empty-icon">🏠</div><h3>No properties yet</h3><p>Tap + to add a property.<br>Paste a link from 99acres or OLX<br>to save it instantly.</p></div>`;
+  } else {
+    c.innerHTML = list.map(p => `
+      <div class="card">
+        <div class="card-head">
+          <span class="card-name">${esc(p.name)}</span>
+          <span class="card-price">₹${esc(p.price)}</span>
+        </div>
+        <div class="card-loc">📍 ${esc(p.location)}</div>
+        <div class="card-tags">
+          <span class="tag tag-source">${esc(p.source)}</span>
+          <span class="tag">${esc(p.type)}</span>
+          <span class="tag tag-${p.status.toLowerCase()}">${esc(p.status)}</span>
+        </div>
+        ${p.notes ? `<div class="card-notes">${esc(p.notes)}</div>` : ''}
+        <div class="card-actions">
+          ${p.url ? `<button class="card-btn link" onclick="openLink('${esc(p.url)}')">View listing</button>` : ''}
+          <button class="card-btn" onclick="cycleStatus('${p.id}')">Next status</button>
+          <button class="card-btn" onclick="editProp('${p.id}')">Edit</button>
+          <button class="card-btn del" onclick="delProp('${p.id}')">✕</button>
+        </div>
+      </div>`).join('');
+  }
+
+  const total = props.length;
+  const prices = props.map(p=>parseInt((p.price||'').replace(/\D/g,''),10)).filter(x=>x>0);
+  const avg = prices.length ? Math.round(prices.reduce((a,b)=>a+b,0)/prices.length) : 0;
+  const neg = props.filter(p=>p.status==='Negotiating').length;
+  const vis = props.filter(p=>p.status==='Visited').length;
+  document.getElementById('statsRow').innerHTML = [
+    ['Total', total],
+    ['Avg price', avg>0 ? fmtPrice(avg) : '—'],
+    ['Visited', vis],
+    ['Negotiating', neg],
+  ].map(([l,v])=>`<div class="stat-pill"><span class="stat-num">${v}</span><span class="stat-lbl">${l}</span></div>`).join('');
+
+  document.getElementById('subtitle').textContent = `${total} propert${total===1?'y':'ies'} saved`;
+}
+
+function fmtPrice(n) {
+  if(n>=10000000) return (n/10000000).toFixed(1)+'Cr';
+  if(n>=100000) return (n/100000).toFixed(1)+'L';
+  return n.toLocaleString('en-IN');
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function openSheet(id) {
+  editId = id || null;
+  document.getElementById('sheetTitle').textContent = id ? 'Edit property' : 'Add property';
+  if(id) {
+    const p = props.find(x=>x.id===id);
+    document.getElementById('f-url').value = p.url||'';
+    document.getElementById('f-name').value = p.name;
+    document.getElementById('f-loc').value = p.location;
+    document.getElementById('f-price').value = p.price;
+    document.getElementById('f-source').value = p.source;
+    document.getElementById('f-type').value = p.type;
+    document.getElementById('f-status').value = p.status;
+    document.getElementById('f-notes').value = p.notes||'';
+    document.getElementById('urlHint').style.display='none';
+  } else {
+    ['f-url','f-name','f-loc','f-price','f-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-source').value='99acres';
+    document.getElementById('f-type').value='Flat / Apartment';
+    document.getElementById('f-status').value='Shortlisted';
+    document.getElementById('urlHint').style.display='none';
+  }
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+}
+
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('sheet').classList.remove('open');
+  editId = null;
+}
+
+function saveProp() {
+  const name = document.getElementById('f-name').value.trim();
+  if(!name) { document.getElementById('f-name').focus(); return; }
+  const p = {
+    id: editId || uid(),
+    name,
+    location: document.getElementById('f-loc').value.trim(),
+    price: document.getElementById('f-price').value.trim(),
+    source: document.getElementById('f-source').value,
+    type: document.getElementById('f-type').value,
+    status: document.getElementById('f-status').value,
+    url: document.getElementById('f-url').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    date: editId ? (props.find(x=>x.id===editId)||{}).date||Date.now() : Date.now(),
+  };
+  if(editId) { const i=props.findIndex(x=>x.id===editId); props[i]=p; }
+  else props.unshift(p);
+  save(); closeSheet(); render();
+}
+
+function editProp(id) { openSheet(id); }
+function delProp(id) {
+  if(!confirm('Remove this property?')) return;
+  props = props.filter(p=>p.id!==id);
+  save(); render();
+}
+function cycleStatus(id) {
+  const s=['Shortlisted','Visited','Negotiating'];
+  const p=props.find(x=>x.id===id);
+  p.status=s[(s.indexOf(p.status)+1)%s.length];
+  save(); render();
+}
+function openLink(url) { window.open(url,'_blank'); }
+
+// PWA / install hint
+function isStandalone() { return window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches; }
+if(!isStandalone()) {
+  const dismissed = localStorage.getItem('install_dismissed');
+  if(!dismissed) {
+    document.getElementById('installBanner').style.display='flex';
+    document.querySelector('#installBanner button').addEventListener('click',()=>{
+      localStorage.setItem('install_dismissed','1');
+    });
+  }
+}
+
+// Service Worker
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// Handle shared URLs (Web Share Target)
+const urlParams = new URLSearchParams(window.location.search);
+const sharedUrl = urlParams.get('url') || urlParams.get('text');
+if(sharedUrl) {
+  window.addEventListener('load', () => {
+    openSheet();
+    document.getElementById('f-url').value = sharedUrl;
+    onUrlInput(sharedUrl);
+  });
+}
+
+load(); render();
+</script>
+</body>
+</html>
